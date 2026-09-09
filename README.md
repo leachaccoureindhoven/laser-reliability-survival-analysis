@@ -11,9 +11,9 @@ The analysis requires a CSV file containing the laser-level measurements and rel
 
 The input dataset should contain, at minimum, the following columns:
 
-* `FAIL_ITH0` — failure indicator
-* `FAIL_ITH0_milestone` — failure time in hours
-* `ITH_0` — threshold current at 0 h
+* `FAIL_ITH0` — failure indicator at 0 hrs
+* `FAIL_ITH0_milestone` — failure time in hrs
+* `ITH_0` — threshold current at 0 hrs
 * `ITH_<time>` — threshold-current measurements at different timepoints, for example:
 
   * `ITH_0`
@@ -26,7 +26,7 @@ The input dataset should contain, at minimum, the following columns:
 * `Wafer number` — wafer identifier
 * `cavity length` — laser cavity length
 * `distance_to_edge` — distance of the device from the wafer edge
-* `Climate_Chamber_Ambient_Temperature [degC]` — test temperature
+* `Climate_Chamber_Ambient_Temperature [degC]` — applied stress temperature
 * `Stress_Current_Density [kA/cm2]` — applied stress current density
 
 The script automatically detects all columns following the format:
@@ -110,7 +110,7 @@ Only devices that are still eligible at the 168-hour landmark are included in th
 For each laser, the script uses all available ITH measurements from:
 
 ```text
-0 h ≤ time ≤ 168 h
+0 hrs ≤ time ≤ 168 hrs
 ```
 
 A minimum of **three ITH measurements** is required.
@@ -343,5 +343,4 @@ The Broad and Strict cohorts provide complementary analyses:
 * **Broad:** maximizes the number of usable devices while requiring observation through the 168-hour landmark.
 * **Strict:** requires an exact 168-hour ITH measurement and therefore provides a more restrictive sensitivity analysis.
 
-The results should be interpreted in light of the limited number of observed failures and the resulting uncertainty in multivariable Cox estimates.
 
