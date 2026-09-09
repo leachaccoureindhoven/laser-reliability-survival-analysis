@@ -255,8 +255,8 @@ Importantly, the script **does not automatically remove variables when EPV is lo
 
 Instead, it:
 
-* fits the complete six-variable Model 4;
-* clearly flags the model as exploratory when EPV < 5;
+* fits the complete six-variable Model 4
+* clearly flags the model as exploratory when EPV < 5
 * additionally fits a reduced stress-current-density-only model as a sensitivity analysis.
 
 This keeps the complete analysis transparent while indicating the limitations associated with the small number of observed failures.
@@ -269,8 +269,8 @@ The analysis also evaluates whether there are indications of wafer-to-wafer diff
 
 The script performs:
 
-* an unadjusted wafer-versus-failure chi-square test;
-* a Cox likelihood-ratio test comparing models with and without wafer terms;
+* an unadjusted wafer-versus-failure chi-square test
+* a Cox likelihood-ratio test comparing models with and without wafer terms
 * Kruskal–Wallis testing of Cox martingale residuals across wafers.
 
 These analyses are treated as **diagnostic/exploratory**, particularly when the number of failures is small.
