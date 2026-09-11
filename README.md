@@ -343,4 +343,16 @@ The Broad and Strict cohorts provide complementary analyses:
 * **Broad:** maximizes the number of usable devices while requiring observation through the 168-hour landmark.
 * **Strict:** requires an exact 168-hour ITH measurement and therefore provides a more restrictive sensitivity analysis.
 
+## 14. Standalone early-rate validation
+
+At the end of the analysis, the early ITH degradation rate is evaluated separately as a single variable. The validation includes:
+
+* univariate Cox proportional-hazards analysis
+* in-sample and leave-one-out C-index
+* comparison of failed and censored devices
+* Kaplan–Meier failure-risk estimates using several early-rate thresholds
+
+These analyses are used as **supporting validation of the early-rate signal**, rather than as a separate predictive model. Because the number of failures is limited, the results are interpreted cautiously.
+
+
 
