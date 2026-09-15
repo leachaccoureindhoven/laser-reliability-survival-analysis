@@ -180,15 +180,7 @@ FAIL_ITH0_milestone
 
 The script automatically discovers available `ITH_<time>` columns, so additional measurement timepoints can be included without modifying the timepoint list manually.
 
-### Main dependencies
 
-```text
-numpy
-pandas
-scipy
-lifelines
-matplotlib
-```
 
 
 
