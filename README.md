@@ -1,4 +1,4 @@
-## Early ITH Degradation — 168 h Landmark Survival Validation
+## Early ITH degradation - 168 h Landmark survival validation
 
 ### Purpose
 
