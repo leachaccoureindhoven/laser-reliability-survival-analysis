@@ -48,14 +48,15 @@ The script performs the following steps:
    * Failures at or before 168 h are excluded from the landmark analysis.
    * Failures after 168 h are retained as events at their **actual failure time**.
    * Devices that do not fail are censored at their **actual last valid observation**.
-   * All available post-landmark follow-up is retained.
-   * No artificial censoring or truncation is introduced at 1000 h or any other fixed time.
+   * Early degradation is defined using measurements up to 168 h.
+   *After the 168 h landmark, each device is followed until failure or its last available observation.
+
 
 5. **Tests the association using a univariate Cox model**
 
    * The primary statistical analysis is a **univariate Cox proportional-hazards model** with early ITH degradation rate as the explanatory variable.
    * The early degradation rate is standardized to one standard deviation.
-   * Therefore, the reported hazard ratio (HR) represents the change in subsequent failure hazard associated with a **1-SD increase in early degradation rate**.
+   * Therefore, the reported hazard ratio (HR) represents the change in subsequent failure hazard associated with a **1-SD increase in early degradation rate**. (For every increase of 1 standard deviation in the early degradation rate, the model estimates how much the risk of failing later changes).
 
 6. **Compares survival using Kaplan–Meier analysis**
 
