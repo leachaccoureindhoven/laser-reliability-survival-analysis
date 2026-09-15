@@ -1,358 +1,202 @@
-# laser-reliability-survival-analysis
-## How to Use
+## Early ITH Degradation — 168 h Landmark Survival Validation
 
-This repository contains Python code for performing a **168-hour landmark survival analysis of laser reliability** using InP Fabry–Pérot laser data.
+### Purpose
 
-The analysis uses early degradation of the threshold current (`ITH`) to investigate its association with **subsequent laser failure**.
+This analysis evaluates whether **faster early degradation of laser threshold current (ITH)** is associated with a higher risk of subsequent device failure.
 
-### 1. Prepare the input dataset
+The analysis uses a **168 h landmark approach**: early degradation is quantified using measurements collected during the first 168 h, and only devices that survive and remain observable through the 168 h landmark are included in the subsequent survival analysis.
 
-The analysis requires a CSV file containing the laser-level measurements and reliability information.
+The analysis is **associational rather than predictive**. The objective is to determine whether early ITH degradation is a meaningful indicator of later reliability risk.
 
-The input dataset should contain, at minimum, the following columns:
+---
 
-* `FAIL_ITH0` — failure indicator at 0 hrs
-* `FAIL_ITH0_milestone` — failure time in hrs
-* `ITH_0` — threshold current at 0 hrs
-* `ITH_<time>` — threshold-current measurements at different timepoints, for example:
+### Analysis workflow
 
-  * `ITH_0`
-  * `ITH_8`
-  * `ITH_24`
-  * `ITH_48`
-  * `ITH_96`
-  * `ITH_144`
-  * `ITH_168`
-* `Wafer number` — wafer identifier
-* `cavity length` — laser cavity length
-* `distance_to_edge` — distance of the device from the wafer edge
-* `Climate_Chamber_Ambient_Temperature [degC]` — applied stress temperature
-* `Stress_Current_Density [kA/cm2]` — applied stress current density
+The script performs the following steps:
 
-The script automatically detects all columns following the format:
+1. **Automatically identifies all available ITH timepoints**
+
+   * Columns following the `ITH_<time>` naming convention are detected automatically.
+   * This avoids hard-coding a fixed set of measurement times.
+
+2. **Calculates the early ITH degradation rate**
+
+   * All valid ITH measurements collected at `t ≤ 168 h` are used.
+   * At least **3 valid early measurements** are required.
+   * The degradation rate is estimated using a **Theil–Sen slope**, providing a robust estimate that is less sensitive to individual noisy or anomalous measurements than ordinary least-squares regression.
+
+3. **Defines the 168 h landmark cohorts**
+
+   Two cohorts are analysed:
+
+   **Broad cohort**
+
+   * Valid `ITH_0`
+   * At least 3 valid ITH measurements during the first 168 h
+   * No failure at or before 168 h
+   * Follow-up reaching at least 168 h
+
+   **Strict cohort**
+
+   * All Broad cohort criteria
+   * Additionally requires an actual `ITH_168` measurement
+
+   The Broad cohort maximizes the available sample size, while the Strict cohort provides a sensitivity analysis based on devices with an explicit 168 h measurement.
+
+4. **Defines post-landmark survival**
+
+   * Failures at or before 168 h are excluded from the landmark analysis.
+   * Failures after 168 h are retained as events at their **actual failure time**.
+   * Devices that do not fail are censored at their **actual last valid observation**.
+   * All available post-landmark follow-up is retained.
+   * No artificial censoring or truncation is introduced at 1000 h or any other fixed time.
+
+5. **Tests the association using a univariate Cox model**
+
+   * The primary statistical analysis is a **univariate Cox proportional-hazards model** with early ITH degradation rate as the explanatory variable.
+   * The early degradation rate is standardized to one standard deviation.
+   * Therefore, the reported hazard ratio (HR) represents the change in subsequent failure hazard associated with a **1-SD increase in early degradation rate**.
+
+6. **Compares survival using Kaplan–Meier analysis**
+
+   * Devices are divided into:
+
+     * **Top 25%:** fastest early degraders
+     * **Bottom 75%:** slower early degraders
+   * Kaplan–Meier curves are used to visualize differences in post-168 h survival.
+
+7. **Quantifies failure concentration**
+
+   * The analysis reports what fraction of all post-landmark failures occurs within the fastest-degrading 25% of devices.
+   * This provides an intuitive complementary measure of whether failures are concentrated among devices showing faster early degradation.
+
+---
+
+### Statistical outputs
+
+For each cohort, the script reports:
+
+* Number of devices
+* Number of post-landmark failures
+* Number of censored devices
+* Median follow-up time
+* Maximum follow-up time
+* Cox hazard ratio
+* 95% confidence interval
+* Cox model p-value
+* Number of failures in the fastest 25%
+* Number of failures in the remaining 75%
+* Failure rate in each group
+* Fraction of all failures occurring in the fastest 25%
+
+The script also generates:
+
+* Kaplan–Meier survival plots
+* Failure-concentration plots
+
+---
+
+### Interpretation
+
+The **primary evidence** comes from the univariate Cox model.
+
+A hazard ratio greater than 1 indicates that devices with a higher early ITH degradation rate have a higher subsequent failure hazard. Statistical significance is assessed using the Cox model p-value and confidence interval.
+
+The Broad and Strict cohorts provide a robustness check against the exact definition of the 168 h landmark.
+
+The Kaplan–Meier and top-25% failure-concentration analyses are used as **supporting evidence**, helping visualize and interpret the relationship between early degradation and later failure.
+
+Importantly, the analysis does **not** attempt to predict individual device failure times. It evaluates whether the magnitude of early ITH degradation is associated with subsequent reliability.
+
+---
+
+### Landmark definition
 
 ```text
-ITH_<time>
+Early period
+0 ─────────────────────────────── 168 h
+│                                 │
+│  Calculate Theil–Sen slope      │ Landmark
+│  from valid ITH measurements    │
+│                                 │
+└─────────────────────────────────┘
+                                  │
+                                  ▼
+                         Post-landmark risk set
+                                  │
+                    ┌─────────────┴─────────────┐
+                    │                           │
+                 Failure                   No failure
+                    │                           │
+             Actual failure time        Last observation
+                    │                           │
+                    ▼                           ▼
+                  Event                    Censored
 ```
 
-where `<time>` is the measurement time in hours.
+Thus, the analysis separates **early degradation measurement** from **subsequent failure observation**, avoiding the use of future information when defining the early degradation metric.
 
-For example:
+---
+
+### Key methodological choices
+
+| Component                    | Definition                          |
+| ---------------------------- | ----------------------------------- |
+| Landmark                     | 168 h                               |
+| Early degradation metric     | Theil–Sen slope of ITH vs. time     |
+| Minimum early measurements   | 3                                   |
+| Early failures               | Excluded                            |
+| Primary model                | Univariate Cox proportional hazards |
+| Cox predictor                | Early ITH degradation rate          |
+| HR scaling                   | Per 1-SD increase                   |
+| Survival visualization       | Kaplan–Meier                        |
+| Group comparison             | Fastest 25% vs. remaining 75%       |
+| Event time                   | Actual failure milestone            |
+| Censoring time               | Actual last observation             |
+| Follow-up cutoff             | None                                |
+| Artificial 1000 h truncation | None                                |
+
+---
+
+### Files
+
+The main analysis script is:
+
+```text
+early_ith_degradation_landmark_survival.py
+```
+
+It requires a CSV dataset containing `ITH_<time>` measurements and the corresponding failure information, including:
 
 ```text
 ITH_0
 ITH_8
 ITH_24
-ITH_48
-ITH_96
-ITH_144
-ITH_168
+...
+FAIL_ITH0
+FAIL_ITH0_milestone
 ```
 
-Additional ITH measurements at later times can also be present.
+The script automatically discovers available `ITH_<time>` columns, so additional measurement timepoints can be included without modifying the timepoint list manually.
 
----
-
-### 2. Set the input file path
-
-Open the Python script and modify:
-
-```python
-INPUT_FILE = r"C:\path\to\your\data.csv"
-```
-
-For example:
-
-```python
-INPUT_FILE = (
-    r"C:\Users\username\Downloads"
-    r"\laser_reliability_dataset.csv"
-)
-```
-
-No other changes to the dataset are required if the column names match those expected by the script.
-
----
-
-## 3. Run the analysis
-
-The script can be executed using Python, Spyder, Jupyter-compatible environments, or another Python IDE.
-
-For example, from a terminal:
-
-```bash
-python landmark_survival_analysis.py
-```
-
-The script will then:
-
-1. Load the dataset.
-2. Automatically identify the available ITH timepoints.
-3. Calculate the early ITH degradation rate.
-4. Construct the 168-hour landmark cohorts.
-5. Perform Cox proportional-hazards analyses.
-6. Perform wafer-level diagnostics.
-7. Generate the analysis figures.
-8. Print the statistical results to the console.
-
----
-
-## 4. 168-hour landmark analysis
-
-The analysis uses **168 h as the landmark time**.
-
-The purpose is to separate information available during early life from failures occurring later.
-
-Only devices that are still eligible at the 168-hour landmark are included in the survival analysis.
-
-### Early ITH degradation rate
-
-For each laser, the script uses all available ITH measurements from:
-
-```text
-0 hrs ≤ time ≤ 168 hrs
-```
-
-A minimum of **three ITH measurements** is required.
-
-The early degradation rate is calculated using a **Theil–Sen slope**, which provides a robust estimate of the change in ITH with time.
-
-Importantly, measurements after 168 h are **not used to calculate the early degradation rate**.
-
----
-
-## 5. Two analysis cohorts
-
-Two cohorts are constructed to assess the robustness of the analysis.
-
-### Broad cohort
-
-A laser is included in the Broad cohort if it has:
-
-* a valid `ITH_0`;
-* at least 3 ITH measurements between 0 and 168 h;
-* no failure at or before 168 h;
-* observations extending to at least 168 h.
-
-An exact `ITH_168` measurement is **not required**.
-
-Therefore, a laser can enter the Broad cohort if its last available measurement is at or after 168 h, even if the measurement is not exactly at 168 h.
-
-### Strict cohort
-
-The Strict cohort applies the same criteria as the Broad cohort, but additionally requires:
-
-```text
-ITH_168
-```
-
-to be available.
-
-Thus, the Strict cohort provides a more restrictive sensitivity analysis based on an explicitly observed 168-hour measurement.
-
----
-
-## 6. Treatment of failures
-
-The landmark analysis distinguishes failures occurring before and after the 168-hour landmark.
-
-### Failures at or before 168 h
-
-Failures satisfying:
-
-```text
-failure time ≤ 168 h
-```
-
-are excluded from the landmark survival cohort.
-
-This prevents information from after the failure from being used to define a post-landmark survival analysis.
-
-### Failures after 168 h
-
-Failures satisfying:
-
-```text
-failure time > 168 h
-```
-
-are treated as events in the landmark analysis.
-
-Therefore, a failure exactly at **168 h is not considered a post-landmark event**.
-
----
-
-## 7. Survival time
-
-The landmark time is:
-
-```text
-168 h
-```
-
-For a device that subsequently fails:
-
-```text
-duration = failure time
-event = 1
-```
-
-For a device that does not fail during the available observation period:
-
-```text
-duration = last available observation time
-event = 0
-```
-
-Conceptually, the survival analysis starts at the 168-hour landmark and evaluates the risk of **subsequent failure**.
-
----
-
-## 8. Cox proportional-hazards model
-
-The main analysis uses a six-variable Cox proportional-hazards model:
-
-1. Stress current density
-2. Early ITH degradation rate
-3. Cavity length
-4. Temperature
-5. Distance to wafer edge
-6. `ITH_0`
-
-The continuous predictors are standardized before fitting the Cox model.
-
-The model reports:
-
-* Hazard ratio (HR)
-* 95% confidence interval
-* p-value
-* Concordance index (C-index)
-* Partial log-likelihood
-
-An HR greater than 1 indicates an increased hazard of subsequent failure per one standard deviation increase in the corresponding standardized predictor.
-
-An HR below 1 indicates a lower hazard.
-
----
-
-## 9. EPV and interpretation
-
-Because the number of failures is limited, the script calculates the **events-per-variable (EPV)**:
-
-```text
-EPV = number of events / number of model variables
-```
-
-A reference threshold of:
-
-```text
-EPV = 5
-```
-
-is used as a warning threshold.
-
-Importantly, the script **does not automatically remove variables when EPV is low**.
-
-Instead, it:
-
-* fits the complete six-variable Model 4
-* clearly flags the model as exploratory when EPV < 5
-* additionally fits a reduced stress-current-density-only model as a sensitivity analysis.
-
-This keeps the complete analysis transparent while indicating the limitations associated with the small number of observed failures.
-
----
-
-## 10. Wafer-level diagnostics
-
-The analysis also evaluates whether there are indications of wafer-to-wafer differences in failure behavior.
-
-The script performs:
-
-* an unadjusted wafer-versus-failure chi-square test
-* a Cox likelihood-ratio test comparing models with and without wafer terms
-* Kruskal–Wallis testing of Cox martingale residuals across wafers.
-
-These analyses are treated as **diagnostic/exploratory**, particularly when the number of failures is small.
-
-A statistically significant wafer-related diagnostic should therefore not automatically be interpreted as proof of an independent wafer effect.
-
----
-
-## 11. Generated figures
-
-The script generates several diagnostic figures.
-
-### Figure 1 — Early ITH degradation rate
-
-Comparison of the early Theil–Sen ITH degradation rate between:
-
-* censored devices;
-* devices that subsequently failed.
-
-Results are shown for both Broad and Strict cohorts.
-
-### Figure 2 — Cavity length
-
-Comparison of cavity length between censored and subsequently failed devices.
-
-### Figure 3 — Stress current density
-
-Comparison of stress current density between censored and subsequently failed devices.
-
-### Figure 4 — Early ITH degradation rate by outcome
-
-A dedicated comparison of early ITH degradation rate between the two outcome groups for both cohorts.
-
-### Figure 5 — Martingale residuals by wafer
-
-Cox Model 4 martingale residuals are shown by wafer for the Broad and Strict cohorts.
-
----
-
-## 12. Required Python packages
-
-The analysis requires:
+### Main dependencies
 
 ```text
 numpy
 pandas
-matplotlib
 scipy
 lifelines
+matplotlib
 ```
 
-They can be installed using:
+### Summary
 
-```bash
-pip install numpy pandas matplotlib scipy lifelines
-```
+This analysis provides a focused validation of the hypothesis:
 
----
+> **Devices exhibiting faster ITH degradation during the first 168 h are more likely to experience subsequent failure.**
 
-## 13. Important interpretation
+The hypothesis is evaluated using a robust early-degradation metric, a 168 h landmark survival framework, univariate Cox regression, Kaplan–Meier survival analysis, and failure-concentration analysis, while retaining the complete available post-landmark follow-up.
 
-This analysis is designed to evaluate whether **early ITH degradation measured during the first 168 h is associated with subsequent laser failure**.
-
-The early degradation rate is calculated exclusively from measurements available up to 168 h, while events are restricted to failures occurring **strictly after 168 h**.
-
-Therefore, the analysis should be interpreted as an assessment of an **early-life reliability indicator and its association with later failure**, rather than as definitive proof of an independently predictive failure model.
-
-The Broad and Strict cohorts provide complementary analyses:
-
-* **Broad:** maximizes the number of usable devices while requiring observation through the 168-hour landmark.
-* **Strict:** requires an exact 168-hour ITH measurement and therefore provides a more restrictive sensitivity analysis.
-
-## 14. Standalone early-rate validation
-
-At the end of the analysis, the early ITH degradation rate is evaluated separately as a single variable. The validation includes:
-
-* univariate Cox proportional-hazards analysis
-* in-sample and leave-one-out C-index
-* comparison of failed and censored devices
-* Kaplan–Meier failure-risk estimates using several early-rate thresholds
-
-These analyses are used as **supporting validation of the early-rate signal**, rather than as a separate predictive model. Because the number of failures is limited, the results are interpreted cautiously.
 
 
 
