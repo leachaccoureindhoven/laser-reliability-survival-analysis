@@ -190,14 +190,6 @@ lifelines
 matplotlib
 ```
 
-### Summary
-
-This analysis provides a focused validation of the hypothesis:
-
-> **Devices exhibiting faster ITH degradation during the first 168 h are more likely to experience subsequent failure.**
-
-The hypothesis is evaluated using a robust early-degradation metric, a 168 h landmark survival framework, univariate Cox regression, Kaplan–Meier survival analysis, and failure-concentration analysis, while retaining the complete available post-landmark follow-up.
-
 
 
 
