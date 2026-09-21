@@ -80,7 +80,6 @@ For each cohort, the script reports:
 * Number of devices
 * Number of post-landmark failures
 * Number of censored devices
-* Median follow-up time
 * Maximum follow-up time
 * Cox hazard ratio
 * 95% confidence interval
