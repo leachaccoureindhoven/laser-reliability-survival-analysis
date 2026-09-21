@@ -154,8 +154,7 @@ Thus, the analysis separates **early degradation measurement** from **subsequent
 | Group comparison             | Fastest 25% vs. remaining 75%       |
 | Event time                   | Actual failure milestone            |
 | Censoring time               | Actual last observation             |
-| Follow-up cutoff             | None                                |
-| Artificial 1000 h truncation | None                                |
+
 
 ---
 
