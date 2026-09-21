@@ -49,7 +49,7 @@ The script performs the following steps:
    * Failures after 168 h are retained as events at their **actual failure time**.
    * Devices that do not fail are censored at their **actual last valid observation**.
    * Early degradation is defined using measurements up to 168 h.
-   *After the 168 h landmark, each device is followed until failure or its last available observation.
+   * After the 168 h landmark, each device is followed until failure or its last available observation.
 
 
 5. **Tests the association using a univariate Cox model**
