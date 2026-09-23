@@ -75,9 +75,7 @@ plt.rcParams.update({
 # =============================================================================
 
 INPUT_FILE = (
-    r"C:\Users\20230289\Downloads"
-    r"\1Wafer all merged _kept_FEATURE_TABLE_FAIL_ANALYSIS_ITH0"
-    r"_with_ProductIDDC_with_edge.csv"
+    r".....csv"
 )
 
 WINDOW_H = 168
